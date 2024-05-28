@@ -1,0 +1,92 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "fastlite",
+    "section": "",
+    "text": "fastlite provides some little quality-of-life improvements for interactive use of the wonderful sqlite-utils library. It’s likely to be particularly of interest to folks using Jupyter.",
+    "crumbs": [
+      "fastlite"
+    ]
+  },
+  {
+    "objectID": "index.html#install",
+    "href": "index.html#install",
+    "title": "fastlite",
+    "section": "Install",
+    "text": "Install\npip install fastlite",
+    "crumbs": [
+      "fastlite"
+    ]
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "fastlite",
+    "section": "Overview",
+    "text": "Overview\n\nfrom sqlite_utils import Database\nfrom fastlite import *\nfrom fastcore.utils import *\n\nWe demonstrate fastlite‘s features here using the ’chinook’ sample database.\n\nurl = 'https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite'\npath = Path('chinook.sqlite')\nif not path.exists(): urlsave(url, path)\n\ndb = Database(\"chinook.sqlite\")\n\nDatabases have a t property that lists all tables:\n\ndt = db.t\ndt\n\nAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track\n\n\nYou can use this to grab a single table…:\n\nartist = dt.Artist\nartist\n\n&lt;Table Artist (ArtistId, Name)&gt;\n\n\n…or multiple tables at once:\n\ndt['Artist','Album','Track','Genre','MediaType']\n\n[&lt;Table Artist (ArtistId, Name)&gt;,\n &lt;Table Album (AlbumId, Title, ArtistId)&gt;,\n &lt;Table Track (TrackId, Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice)&gt;,\n &lt;Table Genre (GenreId, Name)&gt;,\n &lt;Table MediaType (MediaTypeId, Name)&gt;]\n\n\nIt also provides auto-complete in Jupyter, IPython, and nearly any other interactive Python environment:\n\nColumn work in a similar way to tables, using the c property:\n\nac = artist.c\nac\n\nArtistId, Name\n\n\nAuto-complete works for columns too:\n\nColumns, tables, and view stringify in a format suitable for including in SQL statements. That means you can use auto-complete in f-strings.\n\nqry = f\"select * from {artist} where {ac.Name} like 'AC/%'\"\nprint(qry)\n\nselect * from \"Artist\" where \"Artist\".\"Name\" like 'AC/%'\n\n\nYou can view the results of a select query using q:\n\ndb.q(qry)\n\n[{'ArtistId': 1, 'Name': 'AC/DC'}]\n\n\nViews can be accessed through the v property:\n\nalbum = dt.Album\n\nacca_sql = f\"\"\"select {album}.*\nfrom {album} join {artist} using (ArtistId)\nwhere {ac.Name} like 'AC/%'\"\"\"\n\ndb.create_view(\"AccaDaccaAlbums\", acca_sql, replace=True)\ndb.q(f\"select * from {db.v.AccaDaccaAlbums}\")\n\n[{'AlbumId': 1,\n  'Title': 'For Those About To Rock We Salute You',\n  'ArtistId': 1},\n {'AlbumId': 4, 'Title': 'Let There Be Rock', 'ArtistId': 1}]\n\n\nThere’s also a shortcut to select from a table – just call it as a function. There’s lots of params you can check out, such as limit:\n\nartist(limit=2)\n\n[{'ArtistId': 1, 'Name': 'AC/DC'}, {'ArtistId': 2, 'Name': 'Accept'}]\n\n\nPass a truthy value as the first param and you’ll get tuples of primary keys and records:\n\nartist(1, limit=2)\n\n[(1, {'ArtistId': 1, 'Name': 'AC/DC'}), (2, {'ArtistId': 2, 'Name': 'Accept'})]",
+    "crumbs": [
+      "fastlite"
+    ]
+  },
+  {
+    "objectID": "index.html#kw-args",
+    "href": "index.html#kw-args",
+    "title": "fastlite",
+    "section": "KW args",
+    "text": "KW args\nIf you import from fastlite.kw then the following methods accept **kwargs, passing them along to the first dict param:\n\ncreate\ntransform\ntransform_sql\nupdate\ninsert\nupsert\nlookup\n\n\nfrom fastlite.kw import *\n\nWithout the above import, create would require a dict param, but here we just pass keyword args directly:\n\ncats = dt.cats\ncats.create(id=int, name=str, weight=float, pk='id')\nhl_md(cats.schema, 'sql')\n\nCREATE TABLE [cats] (\n   [id] INTEGER PRIMARY KEY,\n   [name] TEXT,\n   [weight] FLOAT\n)\n\n\n…the same applies to insert here:\n\ncats.insert(name='meow', weight=6)\n(idx,cat),*_ = cats(1)\nidx,cat\n\n(1, {'id': 1, 'name': 'meow', 'weight': 6.0})\n\n\nUsing ** in upsert here doesn’t actually achieve anything, since we can just pass a dict directly – it’s just to show that it works:\n\ncat['name'] = \"moo\"\ncats.upsert(**cat)\ncats()\n\n[{'id': 1, 'name': 'moo', 'weight': 6.0}]\n\n\n\ncats.drop()\ncats\n\n&lt;Table cats (does not exist yet)&gt;",
+    "crumbs": [
+      "fastlite"
+    ]
+  },
+  {
+    "objectID": "index.html#diagrams",
+    "href": "index.html#diagrams",
+    "title": "fastlite",
+    "section": "Diagrams",
+    "text": "Diagrams\nIf you have graphviz installed, you can create database diagrams:\n\ndiagram(db.tables)\n\n\n\n\n\n\n\n\nPass a subset of columns to just diagram those. You can also adjust the size and aspect ratio.\n\ndiagram(db.t['Artist','Album','Track','Genre','MediaType'], size=8, ratio=0.4)",
+    "crumbs": [
+      "fastlite"
+    ]
+  },
+  {
+    "objectID": "core.html",
+    "href": "core.html",
+    "title": "Source",
+    "section": "",
+    "text": "from IPython.display import Markdown\n\n\ndb = Database(\"chinook.sqlite\")\n\n\nsource\n\n\n\n Database.t ()\n\n\n\nExported source\nclass _Getter:\n    \"Abstract class with dynamic attributes providing access to DB objects\"\n    def __init__(self, db): self.db = db\n    # NB: Define `__dir__` in subclass to get list of objects\n    def __repr__(self): return \", \".join(dir(self))\n    def __getitem__(self, idxs):\n        if isinstance(idxs,str): idxs = [idxs]\n        return [self.db.table(o) for o in idxs]\n    def __getattr__(self, k):\n        if k[0]=='_': raise AttributeError\n        return self.db[k]\n\nclass _TablesGetter(_Getter):\n    def __dir__(self): return self.db.table_names()\n\n@patch(as_prop=True)\ndef t(self:Database): return _TablesGetter(self)\n\n\nBy returning a _TablesGetter we get a repr and auto-complete that shows all tables in the DB.\n\ndt = db.t\ndt\n\nAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track\n\n\nThis also can be used to get multiple tables at once.\n\ndt['Album','Artist']\n\n[&lt;Table Album (AlbumId, Title, ArtistId)&gt;, &lt;Table Artist (ArtistId, Name)&gt;]\n\n\n\nsource\n\n\n\n\n View.c ()\n\n\n\nExported source\nclass _Col:\n    def __init__(self, t, c): self.t,self.c = t,c\n    def __str__(self):  return f'\"{self.t}\".\"{self.c}\"'\n    def __repr__(self):  return self.c\n\nclass _ColsGetter:\n    def __init__(self, tbl): self.tbl = tbl\n    def __dir__(self): return map(repr, self())\n    def __call__(self): return [_Col(self.tbl.name,o.name) for o in self.tbl.columns]\n    def __repr__(self): return \", \".join(dir(self))\n\n    def __getattr__(self, k):\n        if k[0]=='_': raise AttributeError\n        return _Col(self.tbl.name, k)\n\n@patch(as_prop=True)\ndef c(self:Table): return _ColsGetter(self)\n\n@patch(as_prop=True)\ndef c(self:View): return _ColsGetter(self)\n\n\n\nsource\n\n\n\n\n Table.c ()\n\nColumn auto-complete and repr are much the same as tables.\n\nartist = dt.Artist\nac = artist.c\nac\n\nArtistId, Name\n\n\nColumns stringify in a format suitable for including in SQL statements.\n\nprint(f\"select {ac.Name} ...\")\n\nselect \"Artist\".\"Name\" ...\n\n\n\nsource\n\n\n\n\n View.__str__ ()\n\nReturn str(self).\n\n\nExported source\n@patch\ndef __str__(self:Table): return f'\"{self.name}\"'\n\n@patch\ndef __str__(self:View): return f'\"{self.name}\"'\n\n\n\nsource\n\n\n\n\n Table.__str__ ()\n\nReturn str(self).\nTables and views do the same.\n\nprint(f\"select {ac.Name} from {artist}\")\n\nselect \"Artist\".\"Name\" from \"Artist\"",
+    "crumbs": [
+      "Source"
+    ]
+  },
+  {
+    "objectID": "core.html#metadata",
+    "href": "core.html#metadata",
+    "title": "Source",
+    "section": "",
+    "text": "from IPython.display import Markdown\n\n\ndb = Database(\"chinook.sqlite\")\n\n\nsource\n\n\n\n Database.t ()\n\n\n\nExported source\nclass _Getter:\n    \"Abstract class with dynamic attributes providing access to DB objects\"\n    def __init__(self, db): self.db = db\n    # NB: Define `__dir__` in subclass to get list of objects\n    def __repr__(self): return \", \".join(dir(self))\n    def __getitem__(self, idxs):\n        if isinstance(idxs,str): idxs = [idxs]\n        return [self.db.table(o) for o in idxs]\n    def __getattr__(self, k):\n        if k[0]=='_': raise AttributeError\n        return self.db[k]\n\nclass _TablesGetter(_Getter):\n    def __dir__(self): return self.db.table_names()\n\n@patch(as_prop=True)\ndef t(self:Database): return _TablesGetter(self)\n\n\nBy returning a _TablesGetter we get a repr and auto-complete that shows all tables in the DB.\n\ndt = db.t\ndt\n\nAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track\n\n\nThis also can be used to get multiple tables at once.\n\ndt['Album','Artist']\n\n[&lt;Table Album (AlbumId, Title, ArtistId)&gt;, &lt;Table Artist (ArtistId, Name)&gt;]\n\n\n\nsource\n\n\n\n\n View.c ()\n\n\n\nExported source\nclass _Col:\n    def __init__(self, t, c): self.t,self.c = t,c\n    def __str__(self):  return f'\"{self.t}\".\"{self.c}\"'\n    def __repr__(self):  return self.c\n\nclass _ColsGetter:\n    def __init__(self, tbl): self.tbl = tbl\n    def __dir__(self): return map(repr, self())\n    def __call__(self): return [_Col(self.tbl.name,o.name) for o in self.tbl.columns]\n    def __repr__(self): return \", \".join(dir(self))\n\n    def __getattr__(self, k):\n        if k[0]=='_': raise AttributeError\n        return _Col(self.tbl.name, k)\n\n@patch(as_prop=True)\ndef c(self:Table): return _ColsGetter(self)\n\n@patch(as_prop=True)\ndef c(self:View): return _ColsGetter(self)\n\n\n\nsource\n\n\n\n\n Table.c ()\n\nColumn auto-complete and repr are much the same as tables.\n\nartist = dt.Artist\nac = artist.c\nac\n\nArtistId, Name\n\n\nColumns stringify in a format suitable for including in SQL statements.\n\nprint(f\"select {ac.Name} ...\")\n\nselect \"Artist\".\"Name\" ...\n\n\n\nsource\n\n\n\n\n View.__str__ ()\n\nReturn str(self).\n\n\nExported source\n@patch\ndef __str__(self:Table): return f'\"{self.name}\"'\n\n@patch\ndef __str__(self:View): return f'\"{self.name}\"'\n\n\n\nsource\n\n\n\n\n Table.__str__ ()\n\nReturn str(self).\nTables and views do the same.\n\nprint(f\"select {ac.Name} from {artist}\")\n\nselect \"Artist\".\"Name\" from \"Artist\"",
+    "crumbs": [
+      "Source"
+    ]
+  },
+  {
+    "objectID": "core.html#queries-and-views",
+    "href": "core.html#queries-and-views",
+    "title": "Source",
+    "section": "Queries and views",
+    "text": "Queries and views\n\nsource\n\nDatabase.q\n\n Database.q (sql:str, params=None)\n\n\n\nExported source\n@patch\ndef q(self:Database, sql: str, params = None)-&gt;list:\n    return list(self.query(sql, params=params))\n\n\nThis is a minor shortcut for interactive use.\n\nacdc = db.q(f\"select * from {artist} where {ac.Name} like 'AC/%'\")\nacdc\n\n[{'ArtistId': 1, 'Name': 'AC/DC'}]\n\n\n\nsource\n\n\nTable.__call__\n\n Table.__call__ (with_pk:bool=False, where:str|None=None,\n                 where_args:Union[Iterable,dict,NoneType]=None,\n                 order_by:str|None=None, limit:int|None=None,\n                 offset:int|None=None, **kwargs)\n\nShortcut for rows_where or pks_and_rows_where, depending on with_pk\n\n\nExported source\n@patch\ndef __call__(\n    self:Table, with_pk:bool=False, where:str|None=None,\n    where_args: Iterable|dict|NoneType=None, order_by: str|None=None,\n    limit:int|None=None, offset:int|None=None, **kwargs)-&gt;List[dict]:\n    \"Shortcut for `rows_where` or `pks_and_rows_where`, depending on `with_pk`\"\n    \n    f = getattr(self, 'pks_and_rows_where' if with_pk else 'rows_where')\n    return list(f(where=where, where_args=where_args, order_by=order_by,\n                  limit=limit, offset=offset, **kwargs))\n\n\nThis calls either rows_where (if with_pk) or with_pk (otherwise).\n\nartist(limit=2)\n\n[{'ArtistId': 1, 'Name': 'AC/DC'}, {'ArtistId': 2, 'Name': 'Accept'}]\n\n\n\nartist(True, limit=2)\n\n[(1, {'ArtistId': 1, 'Name': 'AC/DC'}), (2, {'ArtistId': 2, 'Name': 'Accept'})]\n\n\n\nalbum = dt.Album\n\nacca_sql = f\"\"\"select {album}.*\nfrom {album} join {artist} using (ArtistId)\nwhere {ac.Name} like 'AC/%'\"\"\"\n\n\nhl_md(acca_sql, 'sql')\n\nselect \"Album\".*\nfrom \"Album\" join \"Artist\" using (ArtistId)\nwhere \"Artist\".\"Name\" like 'AC/%'\n\n\n\ndb.q(acca_sql)\n\n[{'AlbumId': 1,\n  'Title': 'For Those About To Rock We Salute You',\n  'ArtistId': 1},\n {'AlbumId': 4, 'Title': 'Let There Be Rock', 'ArtistId': 1}]\n\n\n\ndb.create_view(\"AccaDaccaAlbums\", acca_sql, replace=True)\n\n&lt;Database &lt;sqlite3.Connection object&gt;&gt;\n\n\n\nsource\n\n\nDatabase.v\n\n Database.v ()\n\n\n\nExported source\nclass _ViewsGetter(_Getter):\n    def __dir__(self): return self.db.view_names()\n\n@patch(as_prop=True)\ndef v(self:Database): return _ViewsGetter(self)\n\n\n\ndv = db.v\ndv\n\nAccaDaccaAlbums\n\n\n\ndb.q(f\"select * from {dv.AccaDaccaAlbums}\")\n\n[{'AlbumId': 1,\n  'Title': 'For Those About To Rock We Salute You',\n  'ArtistId': 1},\n {'AlbumId': 4, 'Title': 'Let There Be Rock', 'ArtistId': 1}]",
+    "crumbs": [
+      "Source"
+    ]
+  },
+  {
+    "objectID": "core.html#database-diagrams",
+    "href": "core.html#database-diagrams",
+    "title": "Source",
+    "section": "Database diagrams",
+    "text": "Database diagrams\n(Requires graphviz.)\n\nfk = album.foreign_keys[0]\nfk\n\nForeignKey(table='Album', column='ArtistId', other_table='Artist', other_column='ArtistId')\n\n\n\nsource\n\ndiagram\n\n diagram (tbls, ratio=0.7, size='10', neato=False, render=True)\n\n\n\nExported source\ndef _edge(tbl):\n    return \"\\n\".join(f\"{fk.table}:{fk.column} -&gt; {fk.other_table}:{fk.other_column};\"\n                     for fk in tbl.foreign_keys)\n\ndef _row(col):\n    xtra = \" 🔑\" if col.is_pk else \"\"\n    bg = ' bgcolor=\"#ffebcd\"' if col.is_pk else \"\"\n    return f'    &lt;tr&gt;&lt;td port=\"{col.name}\"{bg}&gt;{col.name}{xtra}&lt;/td&gt;&lt;/tr&gt;'\n\ndef _tnode(tbl):\n    rows = \"\\n\".join(_row(o) for o in tbl.columns)\n    res = f\"\"\"&lt;table cellborder=\"1\" cellspacing=\"0\"&gt;\n    &lt;tr&gt;&lt;td bgcolor=\"lightgray\"&gt;{tbl.name}&lt;/td&gt;&lt;/tr&gt;\n{rows}\n  &lt;/table&gt;\"\"\"\n    return f\"{tbl.name} [label=&lt;{res}&gt;];\\n\"\n\n\n\n\nExported source\ndef diagram(tbls, ratio=0.7, size=\"10\", neato=False, render=True):\n    layout = \"\\nlayout=neato;\\noverlap=prism;\\noverlap_scaling=0.5;\"\"\" if neato else \"\"\n    edges  = \"\\n\".join(map(_edge,  tbls))\n    tnodes = \"\\n\".join(map(_tnode, tbls))\n    \n    res = f\"\"\"digraph G {{\nrankdir=LR;{layout}\nsize=\"{size}\";\nratio={ratio};\nnode [shape=plaintext]\n\n{tnodes}\n\n{edges}\n}}\n\"\"\"\n    return Source(res) if render else res\n\n\n\ndiagram(db.tables)",
+    "crumbs": [
+      "Source"
+    ]
+  }
+]
